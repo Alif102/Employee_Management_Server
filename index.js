@@ -52,27 +52,42 @@ const client = new MongoClient(uri, {
   
   
 
- 
+       app.post('/users', async(req,res)=> {
+        let users = req.body;
+        console.log(users)
+        const result = await usersCollection.insertOne(users);
+        res.send(result)
+  })
+
+  app.get('/users', async (req,res)=> {
+    const id = req.params.id
+    // console.log(id)
+    const cursor = usersCollection.find();
+    const result = await cursor.toArray();
+    res.send(result);
+  })
+
+  
 
 
          // Save or modify user email, status in DB
-         app.put('/users/:email', async (req, res) => {
-          const email = req.params.email
-          const user = req.body
-          const query = { email: email }
-          const options = { upsert: true }
-          const isExist = await usersCollection.findOne(query)
-          console.log('User found>', isExist)
-          if (isExist) return res.send(isExist)
-          const result = await usersCollection.updateOne(
-            query,
-            {
-              $set: { ...user, timestamp: Date.now() },
-            },
-            options
-          )
-          res.send(result)
-        })
+        //  app.put('/users/:email', async (req, res) => {
+        //   const email = req.params.email
+        //   const user = req.body
+        //   const query = { email: email }
+        //   const options = { upsert: true }
+        //   const isExist = await usersCollection.findOne(query)
+        //   console.log('User found>', isExist)
+        //   if (isExist) return res.send(isExist)
+        //   const result = await usersCollection.updateOne(
+        //     query,
+        //     {
+        //       $set: { ...user, timestamp: Date.now() },
+        //     },
+        //     options
+        //   )
+        //   res.send(result)
+        // })
 
 
 
