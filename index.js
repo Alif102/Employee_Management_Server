@@ -67,7 +67,17 @@ const client = new MongoClient(uri, {
     res.send(result);
   })
 
+  app.get('/users/:role', async (req, res) => {
+
+
+    const role = req.params.role
   
+  
+    const result = await usersCollection.find({ role: role }).toArray()
+  
+    res.send(result)
+  
+  })
 
 
          // Save or modify user email, status in DB
