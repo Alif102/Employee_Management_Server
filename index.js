@@ -4,6 +4,11 @@ require('dotenv').config();
 const cors = require('cors');
 const app = express(); 
 const port = process.env.PORT || 5000;
+const bodyParser = require('body-parser');
+const fs = require('fs');
+
+
+app.use(bodyParser.json());
 
 // middleware
 app.use(cors());
@@ -109,6 +114,23 @@ const client = new MongoClient(uri, {
 //       const result = await bookingCollection.deleteOne(query)
 //      res.send(result);
 //     })
+
+app.get('/employees', (req, res) => {
+  const rawData = fs.readFileSync('employees.json');
+  const employees = JSON.parse(rawData).employees;
+  res.json(employees);
+});
+
+app.put('/employees/:index', (req, res) => {
+  const { index } = req.params;
+  const rawData = fs.readFileSync('employees.json');
+  const employees = JSON.parse(rawData).employees;
+
+  employees[index].verified = req.body.verified;
+
+  fs.writeFileSync('employees.json', JSON.stringify({ employees }, null, 2));
+  res.json(employees);
+});
 
   
 
