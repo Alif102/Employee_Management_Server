@@ -86,7 +86,7 @@ const client = new MongoClient(uri, {
 
 
          // Save or modify user email, status in DB
-        //  app.put('/users/:email', async (req, res) => {
+        //  app.put('/users:email', async (req, res) => {
         //   const email = req.params.email
         //   const user = req.body
         //   const query = { email: email }
@@ -103,6 +103,12 @@ const client = new MongoClient(uri, {
         //   )
         //   res.send(result)
         // })
+
+        app.get('/user/:email',async (req,res)=> {
+          const email = req.params.email;
+          const result = await usersCollection.findOne({email})
+          res.send(result)
+        })
 
 
 
