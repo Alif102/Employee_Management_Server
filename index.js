@@ -1,24 +1,18 @@
 const express = require('express')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const cors = require('cors');
 const app = express(); 
 const port = process.env.PORT || 5000;
-const bodyParser = require('body-parser');
-const fs = require('fs');
+// const bodyParser = require('body-parser');
+// const fs = require('fs');
 
 
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 // middleware
 app.use(cors());
-// https://backend-nine-liart.vercel.app/ http://localhost:5173/
-//  app.use(cors({
-//   origin : [
-//      'http://localhost:5173', 
-//   ],
-//   credentials: true
-//  }));
+
  app.use(express.json());
 
 //  app.use(cookieParser());
@@ -50,8 +44,9 @@ const client = new MongoClient(uri, {
 
 
       
-      //  const bookingCollection = client.db('Booking').collection('bookings')
        const usersCollection = client.db('Employee').collection('users')
+        const workCollection = client.db('Employee').collection('work')
+
 
     
   
@@ -59,7 +54,13 @@ const client = new MongoClient(uri, {
 
        app.post('/users', async(req,res)=> {
         let users = req.body;
-        console.log(users)
+        // console.log(users)
+        if(users.role === "employee" ){
+          const result = await usersCollection.insertOne({...users, isVerified:"false"});
+       return res.send(result)
+           
+        }
+        
         const result = await usersCollection.insertOne(users);
         res.send(result)
   })
@@ -67,12 +68,28 @@ const client = new MongoClient(uri, {
   app.get('/users', async (req,res)=> {
     const id = req.params.id
     // console.log(id)
-    const cursor = usersCollection.find();
+    const cursor = usersCollection.find({role: {$ne: "admin"}  }  );
     const result = await cursor.toArray();
     res.send(result);
   })
+  app.get("/users/:id", async(req,res)=> {
+    const id = req.params.id;
+    const query = {_id :new ObjectId (id)};
+    const result = await usersCollection.findOne(query);
+    res.send(result)
+  })
 
-  app.get('/users/:role', async (req, res) => {
+ 
+  // app.delete("/users/:id", async(req,res)=> {
+  //   const id = req.params.id;
+  //   const query = {_id :new ObjectId (id)};
+  //   const result = await usersCollection.findOneAndDelete(query);
+  //   res.send(result)
+  // })
+
+ 
+
+  app.get('/usersby/:role', async (req, res) => {
 
 
     const role = req.params.role
@@ -83,6 +100,50 @@ const client = new MongoClient(uri, {
     res.send(result)
   
   })
+  app.get('/usersbyid/:role/:id', async(req,res)=> {
+    const id = req.params.id;
+    // const smallBrandName = brandName.toLowerCase()
+    const query = {_id :new ObjectId (id)};
+    const result = await usersCollection.findOne(query);
+    res.send(result)
+  })
+
+  app.patch('/users/:id', async (req,res)=>{
+    const id = req.params.id;
+    const verified = req.query.verified
+    console.log(id,verified)
+    
+     await usersCollection.findOneAndUpdate({_id : new ObjectId(id)},{$set:{
+      isVerified : verified
+
+    }})
+   res.send({success : true})
+  })
+
+  app.patch('/users/role/:id', async (req,res)=>{
+    const id = req.params.id;
+    const role = req.query.role
+    console.log(id,role)
+    
+     await usersCollection.findOneAndUpdate({_id : new ObjectId(id)},{$set:{
+      role : role
+
+    }})
+   res.send({success : true})
+  })
+
+  app.patch('/users/fired/:id', async (req,res)=>{
+    const id = req.params.id;
+    // const fired = req.query.fired
+
+        
+     await usersCollection.findOneAndUpdate({_id : new ObjectId(id)},{$set:{
+      isFired : true
+
+    }})
+   res.send({success : true})
+  })
+  
 
 
          // Save or modify user email, status in DB
@@ -104,39 +165,26 @@ const client = new MongoClient(uri, {
         //   res.send(result)
         // })
 
-        app.get('/user/:email',async (req,res)=> {
-          const email = req.params.email;
-          const result = await usersCollection.findOne({email})
-          res.send(result)
-        })
+       
 
 
 
 
-// app.delete('/bookings/:id',async(req,res)=>{
-//   const id = req.params.id
-//    console.log(id)
-//    const query = {_id: new ObjectId(id)}
-//       const result = await bookingCollection.deleteOne(query)
-//      res.send(result);
-//     })
 
-app.get('/employees', (req, res) => {
-  const rawData = fs.readFileSync('employees.json');
-  const employees = JSON.parse(rawData).employees;
-  res.json(employees);
-});
 
-app.put('/employees/:index', (req, res) => {
-  const { index } = req.params;
-  const rawData = fs.readFileSync('employees.json');
-  const employees = JSON.parse(rawData).employees;
+app.post('/works', async(req,res)=> {
+  const newProduct = req.body;
+  console.log(newProduct)
+  const result = await workCollection.insertOne(newProduct);
+  res.send(result)
+})
 
-  employees[index].verified = req.body.verified;
+app.get('/works', async (req,res)=> {
+  const cursor = workCollection.find();
+  const result = await cursor.toArray();
+  res.send(result);
+})
 
-  fs.writeFileSync('employees.json', JSON.stringify({ employees }, null, 2));
-  res.json(employees);
-});
 
   
 
