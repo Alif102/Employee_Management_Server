@@ -46,6 +46,7 @@ const client = new MongoClient(uri, {
       
        const usersCollection = client.db('Employee').collection('users')
         const workCollection = client.db('Employee').collection('work')
+        const salariesCollection = client.db('Employee').collection('salaries')
 
 
     
@@ -78,6 +79,13 @@ const client = new MongoClient(uri, {
     const result = await usersCollection.findOne(query);
     res.send(result)
   })
+
+  app.delete("/users/:id", async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await usersCollection.deleteOne(query);
+    res.send(result);
+  });
 
  
   // app.delete("/users/:id", async(req,res)=> {
@@ -144,7 +152,13 @@ const client = new MongoClient(uri, {
    res.send({success : true})
   })
   
+  
 
+  app.get('/user/:email',async (req,res)=> {
+    const email = req.params.email;
+    const result = await usersCollection.findOne({email})
+    res.send(result)
+  })
 
          // Save or modify user email, status in DB
         //  app.put('/users:email', async (req, res) => {
@@ -165,7 +179,26 @@ const client = new MongoClient(uri, {
         //   res.send(result)
         // })
 
-       
+     //Salary Pay
+    app.post("/salaries", async (req, res) => {
+      const salary = req.body;
+      const result = await salariesCollection.insertOne(salary);
+      res.send(result);
+    });
+
+    app.get("/salaries", async (req, res) => {
+      const result = await salariesCollection.find().toArray();
+      res.send(result);
+    });  
+
+     //get rooms for host
+     app.get('/salaries/:email', async (req, res) => {
+      const email = req.params.email
+      const result = await salariesCollection
+        .find({ email : email })
+        .toArray()
+      res.send(result)
+    })
 
 
 
@@ -180,10 +213,21 @@ app.post('/works', async(req,res)=> {
 })
 
 app.get('/works', async (req,res)=> {
-  const cursor = workCollection.find();
-  const result = await cursor.toArray();
-  res.send(result);
+  const email = req.query.email
+  const query = {email : email}
+  const cursor =await workCollection.find(query).sort({date : -1}).toArray();
+  
+  // const result = await cursor;
+  res.send(cursor);
 })
+
+app.get('/all-works', async(req,res)=> {
+   const result =await workCollection.find().toArray()
+   res.send(result)
+})
+// app.get('/all-works', async(req,res)=> {
+
+// }
 
 
   
