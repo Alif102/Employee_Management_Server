@@ -47,6 +47,7 @@ const client = new MongoClient(uri, {
        const usersCollection = client.db('Employee').collection('users')
         const workCollection = client.db('Employee').collection('work')
         const salariesCollection = client.db('Employee').collection('salaries')
+        const ContactsCollection = client.db('Employee').collection('contacts')
 
 
     
@@ -221,14 +222,92 @@ app.get('/works', async (req,res)=> {
   res.send(cursor);
 })
 
-app.get('/all-works', async(req,res)=> {
+app.get('/allWorks', async(req,res)=> {
    const result =await workCollection.find().toArray()
    res.send(result)
 })
-// app.get('/all-works', async(req,res)=> {
+app.get('/allWorks/:email', async (req, res) => {
+  const email = req.params.email
+  const result = await workCollection
+    .find({ email : email })
+    .toArray()
+  res.send(result)
+})
+app.get('/allWorks/:email/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await workCollection.find(query).toArray();
+  res.send(result);
+})
 
-// }
+app.put("/updateWork/:id", async(req,res)=> {
+  const id = req.params.id;
+  const filter = { _id : new ObjectId(id)};
+  // const options = {upsert : true};
+  const updateWork = req.body;
+  // const Product = 
+  console.log(updateWork)
+  const result = await workCollection.updateOne(filter, 
+    {
+      $set : {
+        name : updateWork.name,
+        task : updateWork.task,
+        description : updateWork.description,
+        date : updateWork.date,
+        hoursWorked : updateWork.hoursWorked
+        
+      }
+    } );
+  res.send(result)
+})
 
+// app.get("/tasks",  async (req, res) => {
+//   const result = await tasksCollection.find().toArray();
+//   res.send(result);
+// });
+
+app.delete("/allWorks/:email/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await workCollection.deleteOne(query);
+  res.send(result);
+});
+app.delete("/allWorks/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await workCollection.deleteOne(query);
+  res.send(result);
+});
+
+// contact api
+app.post("/contacts", async (req, res) => {
+  const contact = req.body;
+  const result = await ContactsCollection.insertOne(contact);
+  res.send(result);
+});
+
+    //HR stats
+    app.get("/hr-stats",  async (req, res) => {
+      const users = await usersCollection.estimatedDocumentCount();
+      const totalSalaryAmount = await salariesCollection.estimatedDocumentCount();
+      const totalTask = await workCollection.estimatedDocumentCount();
+      const totalContacts = await ContactsCollection.estimatedDocumentCount();
+      
+      const pipeline = [
+          {
+            $group: {
+              _id: null,
+              totalPaidSalary: { $sum: '$salary' },
+            },
+          },
+        ];
+  
+        const result = await salariesCollection.aggregate(pipeline).toArray();
+        const PaidSalary = result.length > 0 ? result[0].totalPaidSalary : 0;
+
+
+      res.send({users, totalSalaryAmount, PaidSalary, totalTask, totalContacts});
+  })
 
   
 
